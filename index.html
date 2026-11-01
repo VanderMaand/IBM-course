@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Analytics Dashboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans">
+
+  <!-- ===== HEADER ===== -->
+  <header class="bg-gradient-to-r from-indigo-700 to-indigo-500 shadow-lg sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+      <div>
+        <h1 class="text-white text-xl sm:text-2xl font-bold tracking-tight">📊 Sales Analytics Dashboard</h1>
+        <p class="text-indigo-200 text-xs sm:text-sm mt-0.5">Fiscal Year 2024 — Real-time filtered insights</p>
+      </div>
+      <!-- Last updated badge -->
+      <span id="last-updated" class="text-indigo-100 text-xs bg-indigo-800 bg-opacity-50 rounded-full px-3 py-1">Loading data…</span>
+    </div>
+  </header>
+
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ===== FILTER BAR ===== -->
+    <section aria-label="Filters" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-xs font-semibold uppercase tracking-widest text-slate-400 mr-1">Filter by</span>
+
+        <!-- Region filter -->
+        <div class="filter-group">
+          <label for="filter-region" class="sr-only">Region</label>
+          <select id="filter-region" class="filter-select">
+            <option value="">All Regions</option>
+          </select>
+        </div>
+
+        <!-- Product Category filter -->
+        <div class="filter-group">
+          <label for="filter-category" class="sr-only">Product Category</label>
+          <select id="filter-category" class="filter-select">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+
+        <!-- Customer Type filter -->
+        <div class="filter-group">
+          <label for="filter-customer" class="sr-only">Customer Type</label>
+          <select id="filter-customer" class="filter-select">
+            <option value="">All Customer Types</option>
+          </select>
+        </div>
+
+        <!-- Sales Channel filter -->
+        <div class="filter-group">
+          <label for="filter-channel" class="sr-only">Sales Channel</label>
+          <select id="filter-channel" class="filter-select">
+            <option value="">All Channels</option>
+          </select>
+        </div>
+
+        <!-- Reset button -->
+        <button id="btn-reset" class="ml-auto text-xs font-medium text-indigo-600 hover:text-white hover:bg-indigo-600 border border-indigo-300 rounded-lg px-4 py-2 transition-all duration-200">
+          ✕ Reset Filters
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== KPI CARDS ===== -->
+    <section aria-label="Key Performance Indicators">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="kpi-card border-l-4 border-indigo-500">
+          <p class="kpi-label">Total Revenue</p>
+          <p id="kpi-revenue" class="kpi-value text-indigo-600">—</p>
+          <p class="kpi-sub" id="kpi-revenue-sub">from all transactions</p>
+        </div>
+        <div class="kpi-card border-l-4 border-emerald-500">
+          <p class="kpi-label">Total Transactions</p>
+          <p id="kpi-transactions" class="kpi-value text-emerald-600">—</p>
+          <p class="kpi-sub" id="kpi-transactions-sub">orders recorded</p>
+        </div>
+        <div class="kpi-card border-l-4 border-amber-500">
+          <p class="kpi-label">Total Qty Sold</p>
+          <p id="kpi-quantity" class="kpi-value text-amber-600">—</p>
+          <p class="kpi-sub" id="kpi-quantity-sub">units across categories</p>
+        </div>
+        <div class="kpi-card border-l-4 border-rose-500">
+          <p class="kpi-label">Avg Discount</p>
+          <p id="kpi-discount" class="kpi-value text-rose-600">—</p>
+          <p class="kpi-sub" id="kpi-discount-sub">average applied discount</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ROW 1: Sales Trend + Revenue per Region (Polar Area) ===== -->
+    <section class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div class="chart-card lg:col-span-3">
+        <h2 class="chart-title">Sales Trend (Monthly Revenue)</h2>
+        <div class="chart-wrapper"><canvas id="chart-sales-trend"></canvas></div>
+      </div>
+      <div class="chart-card lg:col-span-2">
+        <h2 class="chart-title">Revenue per Region</h2>
+        <div class="chart-wrapper chart-wrapper--sm"><canvas id="chart-region"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== ROW 2: Revenue per Category + Qty Sold per Category ===== -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="chart-card">
+        <h2 class="chart-title">Revenue per Product Category</h2>
+        <div class="chart-wrapper"><canvas id="chart-category-revenue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2 class="chart-title">Quantity Sold per Category</h2>
+        <div class="chart-wrapper"><canvas id="chart-category-qty"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== ROW 3: Sales per Rep + Customer Type Distribution ===== -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="chart-card">
+        <h2 class="chart-title">Sales per Sales Representative</h2>
+        <div class="chart-wrapper"><canvas id="chart-sales-rep"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2 class="chart-title">Customer Type Distribution</h2>
+        <div class="chart-wrapper chart-wrapper--sm"><canvas id="chart-customer-type"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== ROW 4: Payment Method + Sales Channel ===== -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="chart-card">
+        <h2 class="chart-title">Payment Method Usage</h2>
+        <div class="chart-wrapper chart-wrapper--sm"><canvas id="chart-payment"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2 class="chart-title">Sales Channel Distribution</h2>
+        <div class="chart-wrapper chart-wrapper--sm"><canvas id="chart-channel"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ===== ROW 5: Discount vs Sales Scatter + Top 10 Sales ===== -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="chart-card">
+        <h2 class="chart-title">Discount vs Revenue (Scatter)</h2>
+        <div class="chart-wrapper"><canvas id="chart-scatter"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2 class="chart-title">Top 10 Highest Revenue Transactions</h2>
+        <div class="chart-wrapper"><canvas id="chart-top10"></canvas></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="text-center text-xs text-slate-400 py-6 mt-4 border-t border-slate-100">
+    Sales Analytics Dashboard &copy; 2024 — Powered by Chart.js &amp; Tailwind CSS
+  </footer>
+
+  <!-- Main script -->
+  <script src="script.js"></script>
+</body>
+</html>
